@@ -330,7 +330,7 @@ export const useAppStore = defineStore('app', {
 		updateTask(server: Server, taskId: number) {
 			const 这 = useAppStore();
 			server.entity.getTask(taskId).then((content) => {
-				handleTaskUpdate(server, taskId, content, true);
+				handleTaskUpdate(server, taskId, content);
 				这.recalcChangedParams();
 			});
 		},
@@ -646,7 +646,6 @@ export const useAppStore = defineStore('app', {
 			Popup({ message, level });
 			这.notifications.push({
 				time: new Date().getTime(),
-				taskId: -1,
 				content: message,
 				level,
 			})
@@ -758,8 +757,6 @@ export const useAppStore = defineStore('app', {
 					这.pushMsg(`成功连接到服务器 ${server.data.name}`, NotificationLevel.ok);
 					server.data.tasks = [];	// 由于 taskList 只包含 id，重新连接后需要清除原 task 信息以获取新的
 					这.updateServerProperties(server);
-					// 这.updateGlobalTask(server);
-					这.updateTask(server, -1);
 					这.updateTaskList(server);
 					// entity.updateTaskList();
 					这.updateNotifications(server);
@@ -795,7 +792,7 @@ export const useAppStore = defineStore('app', {
 					这.recalcChangedParams();
 				});
 				entity.on('taskUpdate', (data) => {
-					handleTaskUpdate(server, data.taskId, data.task, false);
+					handleTaskUpdate(server, data.taskId, data.task);
 					这.recalcChangedParams();
 				});
 				entity.on('cmdUpdate', (data) => {

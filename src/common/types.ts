@@ -11,7 +11,7 @@ export enum NotificationLevel {
 
 export interface Notification {
 	time: number;
-	taskId: number;
+	taskId?: number;
 	content: string;
 	level: NotificationLevel;
 }

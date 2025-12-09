@@ -72,21 +72,27 @@ export function handleTasklistUpdate(server: Server, content: Array<number>) {
 	}
 	serverData.tasks = Object.assign(newTaskList, {'-1': serverData.tasks[-1]});
 	// 依次获取所有新增任务的信息
-	for (const newTaskId of newTaskIds) {
-		这.updateTask(server, newTaskId);
-	}
+	// 为什么要加延迟？在不加延迟的情况下，会产生这样的错误：
+	// 添加远程任务时，服务器会发送 tasklist update 来到此处更新任务（返回一个 idle 的任务），同时上传模块会通过 setUploadStatus 使服务器发送 task update（返回一个 initializing 的任务），也就是产生两次 task update
+	// 但神奇的是，这.updateTask 的时候，还没执行 setUploadStatus，所以返回的是 idle，但请求还没来得及返回，setUploadStatus 就先走一步，把 initializing 更新到本地了。也就是说，updateTask 这个操作被插队了，导致把旧状态带了回来 = =
+	setTimeout(() => {
+		for (const newTaskId of newTaskIds) {
+			这.updateTask(server, newTaskId);
+		}
+	}, 20);
 };
 /**
  * 更新整个 task
  * 通过广播事件收到的 task 有可能是不完整的，不包含 cmdData，mergeTaskFromService 只会进行 Object.assign，不会清空
  */
-export function handleTaskUpdate(server: Server, id: number, content: Task, isFull: boolean) {
+export function handleTaskUpdate(server: Server, id: number, content: Task) {
 	const serverData = server.data;
 	const localTask = serverData.tasks[id];
 	if (!localTask) {
 		// 本地不存在此任务，则新增
 		serverData.tasks[id] = getInitialUITask('');
 	}
+	console.log('taskUpdate', content);
 	const task = mergeTaskFromService(serverData.tasks[id], content);
 	serverData.tasks[id] = task;
 	// timer 相关处理（开始运行时添加定时器，结束或暂停运行时取消定时器）
@@ -168,8 +174,9 @@ export function handleNotificationUpdate(server: Server, notificationId: number,
 	const 这 = useAppStore();
 	if (notification) {
 		server.data.notifications[notificationId] = notification;
+		const serverNameString = 这.servers.length > 1 ? `${server.data.name}：` : '';
 		Popup({
-			message: notification.content,
+			message: serverNameString + notification.content,
 			level: notification.level,
 		});
 		这.setUnreadNotifationCount();
@@ -193,7 +200,7 @@ export function handleCloseConfirm(localServer?: Server) {
 	function getQueueTaskCount(server: Server) {
 		let count: number = 0;
 		for (const task of Object.values(server.data.tasks)) {
-			if (task.status === TaskStatus.running || task.status === TaskStatus.paused || task.status === TaskStatus.stopping || task.status === TaskStatus.finishing) {
+			if (task && [TaskStatus.running, TaskStatus.paused, TaskStatus.paused_queued, TaskStatus.stopping, TaskStatus.finishing].includes(task.status)) {
 				count++;
 			}
 		}

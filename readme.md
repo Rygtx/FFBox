@@ -34,7 +34,7 @@
 
 - 前后端分离、可部署、跨平台  
   既可直接使用 FFBox，也可单独使用 Node.js 远程转码服务 + WebUI 部署，或混搭使用。
-  支持 Windows、Linux、macOS。
+  完整支持 Windows、Linux、macOS。支持在 Android 上部署服务。
 
 - 任务管理系统  
   支持拖入即开始、完成即移除。
@@ -75,12 +75,15 @@
 
 由于这里不是前端课堂，此处当然不会有手把手的详细指南🌚。以下会列出一些需要的东西，您可自行了解：
 
-1. `Visual Studio Code`：这是本项目推荐使用的编辑器。本项目已为该编辑器进行了启动后端等相关任务的编写。
-2. `node.js`：它是一个 JavaScript 运行环境，主要用于项目的编译。建议使用 `nvm`，当项目运行不起来的时候可尝试使用它来切换一下 node.js 的版本。
-3. `pnpm`：它是本项目推荐使用的依赖管理器。
-4. `pnpm set registry ___` `pnpm set ELECTRON_MIRROR`：如果您无法正常下载依赖，请配置源。
-5. `Visual Studio 2022`：如果您要在 Windows 平台上编译 FFBoxHelper，那么这是必须的。
-6. `Inno Setup 6`: 如果要在 Windows 平台上制作安装包，那么需要将软件放置在环境变量中。另外，`ChineseSimplified.isl` 也需要另行准备放在该软件目录下。
+1. `编辑器`：推荐使用 `Visual Studio Code`，已在 `.vscode` 目录中预置了启动调试后端、插入调试主进程等相关任务。
+2. `运行环境`：推荐使用 `node.js`，主要用于项目的编译。如有需要还可 `nvm`，使用它可以切换当前的 nodejs 版本，解决部分情况下运行不起来的问题。  
+   如有需要，也可使用 `bun` 作为运行环境。您可以把它理解成安卓版鸿蒙。但目前 bun 无法用于调试。
+3. `包管理器`：推荐使用 `pnpm`。由于 electron-builder 对 utimes 的编译存在问题，pnpm 已配置为 `node-linker=hoisted`。  
+   您也可以使用 `npm` 作为包管理器，npm 的速度约慢一半。这样打出来的包体积大小会有轻微不同（哪怕删除 lock 文件拉取最新）。  
+   `yarn` 和 `bun` 打出来的包目前只有前端可以交由 electron-builder 打包，后端 pkg 打出来的包不可用。
+4. `404 和 408 问题`：`pnpm install`、`pkg:backend`、`package` 的时候均需要联网下载二进制预编译文件。GitHub 的 url 在国内尤为难以访问，您可能需要依据互联网上的攻略，通过如 `pnpm set registry` `pnpm set ELECTRON_MIRROR` 等方式配置 `源` 或者 `“转发的魔法”`。
+5. `Windows 上的 FFBoxHelper`：该文件已预编译好。如果您想自行编译，则需要 `Visual Studio 2022`。
+6. `Windows 上的安装包`：Linux / macOS 的完整打包流程无需额外配置软件，但 Windows 上需要安装 `Inno Setup 6`，并将软件（iscc.exe）放置在环境变量中。另外，`ChineseSimplified.isl` 也需要另行准备放在该软件目录下。
 
 ## FFmpeg
 

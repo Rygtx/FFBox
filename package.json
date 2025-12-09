@@ -16,6 +16,7 @@
     "pkg:backend:win": "pkg --config ./config/pkg.win.config.json ./app/backend/index.cjs",
     "pkg:backend:mac": "pkg --config ./config/pkg.mac.config.json ./app/backend/index.cjs",
     "pkg:backend:linux": "pkg --config ./config/pkg.linux.config.json ./app/backend/index.cjs",
+    "bun:backend": "bun build ./app/backend/index.cjs --compile --minify --bytecode --outfile ./app/backend/index-bun",
     "package": "electron-builder",
     "build:everything": "npm run build:frontend && npm run build:backend && npm run package"
   },

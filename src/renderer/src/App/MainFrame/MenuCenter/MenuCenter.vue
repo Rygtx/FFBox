@@ -43,7 +43,7 @@ const finalMenu = computed(() => {
 			subMenu: [
 				{ type: 'submenu', label: '访问官网', subMenu: [
 					{ type: 'normal', label: 'FFBox 官网', value: 'FFBox 官网', onClick: () => nodeBridge.jumpToUrl('http://ffbox.ttqf.tech') },
-					{ type: 'normal', label: '作者个人网站', value: '作者个人网站', onClick: () => nodeBridge.jumpToUrl('http://ttqf.tech') },
+					// { type: 'normal', label: '作者个人网站', value: '作者个人网站', onClick: () => nodeBridge.jumpToUrl('http://ttqf.tech') },
 					{ type: 'normal', label: 'FFmpeg 官网', value: 'FFmpeg 官网', onClick: () => nodeBridge.jumpToUrl('https://ffmpeg.org') },
 				] },
 				{ type: 'submenu', label: '访问源码', subMenu: [
@@ -73,8 +73,6 @@ const finalMenu = computed(() => {
 					{ type: 'normal' as const, label: '刷新当前服务器信息', value: '刷新当前服务器信息', tooltip: '刷新服务器版本、任务列表、通知列表等信息', onClick: () => {
 						const server = appStore.currentServer as any;
 						appStore.updateServerProperties(server);
-						// appStore.updateGlobalTask(server);
-						appStore.updateTask(server, -1);
 						appStore.updateTaskList(server);
 						// entity.updateTaskList();
 						appStore.updateNotifications(server);

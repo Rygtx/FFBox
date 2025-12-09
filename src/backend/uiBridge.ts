@@ -376,9 +376,9 @@ function getRouter(): Router {
 		for (const hash of hashs) {
 			const filePath = uploadDir + '/' + hash;
 			if (fs.existsSync(filePath)) {
-				ret.push(Math.floor(Math.random() * 2 ** 31) * 2 + 1);
+				ret.push(1);
 			} else {
-				ret.push(Math.floor(Math.random() * 2 ** 31) * 2);
+				ret.push(0);
 			}
 		}
 		ctx.response.status = 200;
@@ -404,6 +404,19 @@ function getRouter(): Router {
 			log.error('文件重命名失败', error);
 			ctx.response.status = 500;
 		}
+	});
+
+	// 因 ws RPC 暂时没做中间件设计，而 taskAdd 需要由后端处理传入 isRemote，所以这里使用请求
+	router.put('/task', async function (ctx) {
+		if (!ctx.request.body) {
+			// 非法请求
+			ctx.response.status = 400;
+			return;
+		}
+		const body = ctx.request.body;
+		const result = await ffboxService!.taskAdd(body.taskName, body.outputParams, ctx.URL.hostname !== 'localhost');
+		ctx.response.status = 200;
+		ctx.response.body = result;
 	});
 
 	// 获取任务 ID 列表

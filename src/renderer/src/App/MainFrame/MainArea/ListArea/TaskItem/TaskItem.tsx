@@ -458,11 +458,11 @@ export const TaskItem = defineComponent((props: Props) => {
 		Tooltip.show({
 			content: <span>
 				时长：{durationBefore.value} → {durationAfter.value}<br />
-				容器：{props.task.before[0]?.demuxer} → {firstOutput.mux.format}<br />
-				规格：{smpteBefore.value} → {firstOutput.video.resolution}@{firstOutput.video.framerate}<br />
-				视频：{defaultVideo.value.codec}{videoInputBitrate.value} → {firstOutput.video.vcodec}{videoRateControl.value}<br />
-				音频：{defaultAudio.value.codec}{audioInputBitrate.value} → {firstOutput.audio.acodec}{audioRateControl.value}<br />
-				{props.task.before.length > 1 || props.task.after.outputs.length > 1 ? '以上信息仅显示首个输入和首个输出，并不代表真实情况' : null}
+				容器：{props.task.before[0]?.demuxer ?? '🈚'} → {firstOutput.mux.format}<br />
+				规格：{defaultVideo.value ? smpteBefore.value : '🈚'} → {firstOutput.video.resolution}@{firstOutput.video.framerate}<br />
+				视频：{defaultVideo.value ? `${defaultVideo.value.codec}${videoInputBitrate.value}` : '🈚'} → {firstOutput.video.vcodec}{videoRateControl.value}<br />
+				音频：{defaultAudio.value ? `${defaultAudio.value.codec}${audioInputBitrate.value}` : '🈚'} → {firstOutput.audio.acodec}{audioRateControl.value}<br />
+				{props.task.before.length > 1 || props.task.after.outputs.length > 1 ? '以上信息仅显示默认输入和首个输出，并不代表完整情况' : null}
 			</span>,
 			style: position,
 			class: css.paraAreaTip,

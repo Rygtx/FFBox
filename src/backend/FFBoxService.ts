@@ -8,10 +8,9 @@ import path from 'path';
 import { ServiceTask, TaskStatus, OutputParams, FFBoxServiceEvent, Notification, NotificationLevel, FFmpegProgress, WorkingStatus, FFBoxServiceInterface, FFmpegInfo, EncoderDetail, FFmpegCodecDetail, FFmpegFilterDetail, FFmpegMuxerDetail, FFmpegDemuxerDetail } from '@common/types';
 import i11n from '@common/i11n/i11n';
 import { genTaskOutputFiles, getFFmpegParaArray } from '@common/getFFmpegParaArray';
-import { defaultParams } from '@common/defaultParams';
 import localConfig from '@common/localConfig';
 import { parseFFmpegCodecsToCodecsList, parseFFmpegMuDeMuxersToList } from '@common/params/parser';
-import { getInitialServiceTask, convertAnyTaskToTask, TypedEventEmitter, replaceOutputParams, randomString, getOutputDuration, parseTimeString, getOutputFileTime } from '@common/utils';
+import { getInitialServiceTask, TypedEventEmitter, replaceOutputParams, randomString, getOutputDuration, parseTimeString, getOutputFileTime } from '@common/utils';
 import { getMachineId, log } from './utils';
 import { FFmpeg } from './FFmpegInvoke';
 
@@ -30,7 +29,6 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 	public ffmpegCodecs: { video: FFmpegCodecDetail[], audio: FFmpegCodecDetail[]; };
 	public ffmpegFormats: { muxer: FFmpegMuxerDetail[], demuxer: FFmpegDemuxerDetail[]; };
 	public ffmpegFilters: FFmpegFilterDetail[] = [];
-	private globalTask: ServiceTask;
 	public notifications: Notification[] = [];
 	private latestNotificationId = 0;
 	public functionLevel = 20;
@@ -44,8 +42,6 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 	constructor() {
 		super();
 		log.info('正在初始化 FFBox 服务。');
-		this.globalTask = getInitialServiceTask('');
-		this.tasklist[-1] = this.globalTask;
 		setTimeout(async () => {
 			this.initActivationInfo();
 			await this.initSettings();
@@ -67,7 +63,6 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 	 * 从本地存储初始化设置
 	 */
 	public async initSettings(): Promise<void> {
-		this.globalTask.after = defaultParams;
 		const currentMaxThreads = (await localConfig.get('service.maxThreads') as number) || 1;
 		this.maxThreads = currentMaxThreads;
 		log.info(`设定最大同时运行任务数为 ${this.maxThreads}`);
@@ -85,7 +80,7 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 		if (preserveUnfinishedTasks) {
 			try {
 				if (lastStatusTasks.length) {
-					this.setNotification(-1, `服务器上次退出时有未完成任务 ${lastStatusTasks.length} 个，正在重新添加到任务列表`, NotificationLevel.info);
+					this.setNotification(undefined, `服务器上次退出时有未完成任务 ${lastStatusTasks.length} 个，正在重新添加到任务列表`, NotificationLevel.info);
 				}
 				log.info(`正在恢复上次退出时未完成的 ${lastStatusTasks.length} 个任务`);
 				for (const task of lastStatusTasks) {
@@ -140,9 +135,6 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 			}
 		}
 		const ffmpeg = new FFmpeg(this.ffmpegPath, 1);
-		ffmpeg.on('data', ({ content }) => {
-			this.setCmdText(-1, content);
-		});
 		ffmpeg.on('version', async ({ content }) => {
 			if (content) {
 				this.ffmpegInfo.version = content;
@@ -397,7 +389,7 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 		const maxTaskCount = this.functionLevel < 40 ? 66 : this.functionLevel < 60 ? 99 : Number.MAX_SAFE_INTEGER;
 		if (Object.keys(this.tasklist).length - 1 >= maxTaskCount) {	// 全局任务占了一个位置
 			this.setNotification(
-				-1,
+				undefined,
 				`😞任务数量达到上限了（后端）\n` +
 				`💔您的用户等级最高支持在任务列表中放入 ${maxTaskCount} 个任务，您可以先删除一些任务再添加\n` +
 				'🤫开发者设计该项限制的意图是避免超出合理范围的操作导致前端卡顿（实测 100 个任务同时运行一遍或能导致前端卡顿半小时），\n' +
@@ -422,9 +414,9 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 			task.remoteTask = true;
 		} else {
 			task.paraArray = getFFmpegParaArray({ outputParams: task.after, withQuotes: true });
-			if (firstFilePath?.length) {
-				this.getFileMetadata(id, task);
-			}
+			// if (firstFilePath?.length) {
+			// 	this.getFileMetadata(id, task);
+			// }
 		}
 
 		this.emit('tasklistUpdate', { content: Object.keys(this.tasklist).map(Number) });
@@ -1105,7 +1097,7 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 	 * @param content
 	 * @param level
 	 */
-	public setNotification(taskId: number, content: string, level: NotificationLevel): void {
+	public setNotification(taskId: number | undefined, content: string, level: NotificationLevel): void {
 		const notificationId = this.latestNotificationId++;
 		const notification = {
 			time: new Date().getTime(),

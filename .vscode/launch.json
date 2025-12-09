@@ -27,6 +27,18 @@
       "preLaunchTask": "编译后端（dev）",
     },
     {
+      "name": "编译调试后端 (bun) (vite)（只能编译，无法调试，因为识别不到 sourcemap）",
+      "type": "bun",
+      "request": "launch",
+      "cwd": "${workspaceRoot}",
+      "runtime": "bun",
+      "runtimeArgs": ["--bun"],
+      // "program": "${workspaceFolder}/src/backend/index.ts",
+      "program": "${workspaceFolder}/app/backend/index.cjs",
+      "args": ["--bun", "--loglevel", "6", "--webuiPort", "33270"],
+      "preLaunchTask": "编译后端（bun）（dev）",
+    },
+    {
       "name": "编译调试后端 (webpack)",
       "type": "node",
       "request": "launch",

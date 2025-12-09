@@ -40,14 +40,14 @@ export class SingleTaskScheduler extends EventEmitter {
 	public start() {
 		this._working = true;
 		if (this.taskName) this.globalPool.add(this);
-		this.queseTask();
+		this.queueTask();
 	}
 	public stop() {
 		this._working = false;
 		if (this.taskName) this.globalPool.delete(this);
 	}
 
-	private queseTask() {
+	private queueTask() {
 		// 每次单个任务完成后，调用此函数
 		if (this.taskName) {
 			/**
@@ -90,7 +90,7 @@ export class SingleTaskScheduler extends EventEmitter {
 				if (!this.working && !this.workingCount) {
 					this.emit('allDone');	// 已停止工作，且没有其他任务，即为全部完成
 				}
-				this.queseTask();
+				this.queueTask();
 			}).catch(() => {
 				// 任务失败即不再继续后续任务，剩余所有任务均执行 workingCount-- 后，最后一个完成的检查到 workingCount === 0 即停止
 				this._working = false;
@@ -103,7 +103,7 @@ export class SingleTaskScheduler extends EventEmitter {
 				if (!this._workingCount) {
 					this.emit('allDone');	// 已停止工作，且没有其他任务，即为全部完成
 				}
-				this.queseTask();
+				this.queueTask();
 			});
 
 			this._count++;	// 任务开始后计数 +1（一定会在 finally 前进行）
@@ -113,6 +113,7 @@ export class SingleTaskScheduler extends EventEmitter {
 
 const hashWorkers: Worker[] = [];	// 所有任务共用
 const hashWorkerRunningList: boolean[] = [];
+const memLimit = 100 * 1000 * 1000;	// 已读取未哈希的数据量达到此值时转锁等待哈希；大小小于该值的文件读取完毕后无需清除
 
 /**
  * 添加一个上传任务。文件大小读出后将立刻返回
@@ -156,16 +157,21 @@ export async function addUploadTask(server: Server, input: string | File, taskId
 		file.status = 'reading';
 		const readDoneChunkIndexes: number[] = [];	// 供下一轮 hash 进行消费
 		let readDone = 'false';
+		let memUsed = 0;	// 也可通过遍历列表获得。但存起来就减少开销
 		const ts1 = new SingleTaskScheduler({
 			concurrency: 1,
 			taskName: 'readFile',
 			task: async (sts) => {
 				// 利用 sts.count 可以方便地通过运行次序知道自己应该读取哪一块，但这个值要在函数开始时马上存下来，否则会变
+				// TODO 添加分块秒传校验逻辑
 				const taskIndex = sts.count;
 				const offset = taskIndex * segment;
 				const chunkSize = Math.min(segment, fileSize - offset);
 				if (chunkSize <= 0) {
 					throw '读取任务即将结束';
+				}
+				if (memUsed >= memLimit) {
+					await new Promise((resolve) => setTimeout(resolve, 150));	// 等待哈希转锁
 				}
 				let buffer: ArrayBuffer;
 				const chunk: UploadChunk = {
@@ -188,6 +194,7 @@ export async function addUploadTask(server: Server, input: string | File, taskId
 				chunk.buffer = buffer;
 				chunk.status = 'hashing';	// 其实是等待 hashing
 				readDoneChunkIndexes.push(taskIndex);
+				memUsed += chunk.size;
 				// await new Promise(r => setTimeout(r, 1000));
 			},
 		});
@@ -205,7 +212,7 @@ export async function addUploadTask(server: Server, input: string | File, taskId
 
 		// 根据 CPU 数量划分成若干个 worker 任务
 		file.status = 'hashing';
-		const cpuCount = navigator.hardwareConcurrency / 2 || 4;
+		const cpuCount = navigator.hardwareConcurrency - 1 || 4;
 		if (!hashWorkers.length) {
 			for (let i = 0; i < cpuCount; i++) {
 				hashWorkers.push(new HashWorker());
@@ -242,8 +249,14 @@ export async function addUploadTask(server: Server, input: string | File, taskId
 						worker.onmessage = (event) => {
 							file.chunks[notHashedIndex].hash = event.data.hash;
 							// console.log(`【${fileBaseName}】【${notHashedIndex}】hash 已计算：${event.data.hash}`);
-							file.chunks[notHashedIndex].buffer = event.data.buffer;	// buffer 还回来
-							hashWorkerRunningList[idleWorkerIndex] = false;	
+							if (file.size <= memLimit) {
+								// 在 memLimit 之内的文件不需要清除缓存重新读取
+								file.chunks[notHashedIndex].buffer = event.data.buffer;	// buffer 还回来
+							} else {
+								// 否则不要缓存，等下面上传前再读取
+								memUsed -= file.chunks[notHashedIndex].size;
+							}
+							hashWorkerRunningList[idleWorkerIndex] = false;
 							hashDoneChunkIndexes.push(notHashedIndex);
 							resolve(0);
 						}
@@ -297,7 +310,7 @@ export async function addUploadTask(server: Server, input: string | File, taskId
 		});
 		const responseText = await response.text();
 		let content = JSON.parse(responseText) as number[];
-		if (content[0] % 2) {
+		if (content[0]) {
 			console.log(fileBaseName, '已缓存');
 			server.entity.mergeUploaded(taskId, file.chunks.map((chunk) => chunk.hash), fileBaseName, inputName, { accessTime, createTime, modifyTime });
 			const taskUpdateHandler = (arg: { taskId: number }) => {
@@ -322,17 +335,50 @@ export async function addUploadTask(server: Server, input: string | File, taskId
 			file.uploadTask = undefined;
 		} else {
 			console.log(fileBaseName, '未缓存');
-			// 运行到此时，虽然代码逻辑上不保证本地 tasklist 一定有此任务，但正常操作下 tasklist update 一早就到达了，而且用户也不会在上传开始前删除任务
-			// 若未缓存则对各个分片进行上传。若出错则重试
+			// 若未缓存则检查分片缓存状态对各个分片进行上传。若出错则重试
+			// const isCachedList = new Array(file.chunks.length).fill(false);
+			const response = await fetch(`http://${server.entity.ip}:${server.entity.port}/upload/check/`, {
+				method: 'post',
+				body: JSON.stringify({
+					hashs: file.chunks.map((chunk) => chunk.hash),
+				}),
+				headers: new Headers({
+					'Content-Type': 'application/json',
+					'Authorization': `Bearer ${server.entity.sessionId}`,
+				}),
+			});
+			const responseText = await response.text();
+			const isCachedList = JSON.parse(responseText) as number[];
+	
 			const ts3 = new SingleTaskScheduler({
-				concurrency: 1,
+				concurrency: 2,
 				taskName: 'uploadFile',
 				task: async (sts) => {
 					const chunkIndex = sts.count;
-					if (chunkIndex>= file.chunks.length) {
+					if (chunkIndex >= file.chunks.length) {
 						throw '上传任务即将结束';
 					}
 					const chunk = file.chunks[chunkIndex];
+					if (isCachedList[chunkIndex]) {
+						// 分片已缓存，直接标记为已完成，跳过上传
+						chunk.status = 'finished';
+						chunk.transferred = chunk.size;
+						chunk.buffer = undefined;
+						return;
+					}
+
+					const offset = chunkIndex * segment;
+					const chunkSize = Math.min(segment, fileSize - offset);
+					if (file.size > memLimit) {
+						// chunk.buffer 已在前一步骤被清除，需要重新读取文件
+						if (typeof input === 'string') {
+							chunk.buffer = (await nodeBridge.getLocalFileChunk(input, offset, chunkSize)).buffer as ArrayBuffer;
+						} else {
+							const blob = input.slice(offset, offset + chunkSize);
+							chunk.buffer = (await blob.arrayBuffer()) as any;
+						}
+					}
+
 					let tryCount = 0;
 					while (tryCount++ < 3) {
 						chunk.status = 'uploading';

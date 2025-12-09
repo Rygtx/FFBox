@@ -240,15 +240,33 @@ export class ServiceBridge extends (EventEmitter as new () => TypedEventEmitter<
 		this.sendWs(data);
 	}
 
+	// public taskAdd(taskName: string, outputParams?: OutputParams): Promise<number> {
+	// 	let data: FFBoxServiceFunctionApi = {
+	// 		function: 'taskAdd',
+	// 		args: [taskName, outputParams],
+	// 		seq: ++this.seq,
+	// 	}
+	// 	this.sendWs(data);
+	// 	return new Promise<number>((resolve, reject) => {
+	// 		this.waitingForResponse.set(this.seq, [(result) => resolve(result), () => reject()]);
+	// 	});
+	// }
+	// 因为 service 需要一个独特的 isRemote，所以这里不能用 ws RPC，需要用请求
 	public taskAdd(taskName: string, outputParams?: OutputParams): Promise<number> {
-		let data: FFBoxServiceFunctionApi = {
-			function: 'taskAdd',
-			args: [taskName, outputParams],
-			seq: ++this.seq,
-		}
-		this.sendWs(data);
-		return new Promise<number>((resolve, reject) => {
-			this.waitingForResponse.set(this.seq, [(result) => resolve(result), () => reject()]);
+		return new Promise((resolve, reject) => {
+			fetch(`http://${this.ip}:${this.port}/task`, {
+				method: 'put',
+				body: JSON.stringify({ taskName, outputParams }),
+				headers: new Headers({
+					'Content-Type': 'application/json',
+					'Authorization': `Bearer ${this.sessionId}`,
+				}),
+			}).then((response) => {
+				response.text().then((text) => {
+					let id = parseInt(text);
+					resolve(id);
+				})
+			}).catch((err) => reject(err))
 		});
 	}
 
