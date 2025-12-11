@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, shallowRef, watch } from 'vue';
 import nodeBridge from '@renderer/bridges/nodeBridge';
 import { useAppStore } from '@renderer/stores/appStore';
 import { NotificationLevel } from '@common/types';
@@ -11,6 +11,17 @@ import ImageNoffmpeg from './noffmpeg.svg?component';
 const appStore = useAppStore();
 
 const selectedTask_last = ref(-1);
+
+// const tasks2 = shallowRef([]);
+
+// watch(() => appStore.currentServer?.data.tasks, (newTasks) => {
+//     const arr = tasks2.value;  // 复用同一数组
+//     arr.length = 0;
+//     for (const [id_s, task] of Object.entries(newTasks)) {
+//         if (id_s !== '-1') arr.push(Object.assign(task, { id: +id_s }));
+//     }
+// 	console.log(tasks2.value);
+// }, { deep: true });
 
 const tasks = computed(() => {
 	// console.log('服务器', appStore.currentServer, '任务', appStore.currentServer?.data.tasks);
@@ -109,7 +120,7 @@ const handleDownloadFFmpegClicked = () => {
 <template>
 	<div class="listarea">
 		<div class="tasklist">
-			<TaskItem
+			<!-- <TaskItem
 				v-for="(task, index) in tasks"
 				:key="task.id"
 				:task="task"
@@ -117,6 +128,15 @@ const handleDownloadFFmpegClicked = () => {
 				:selected="appStore.selectedTask.has(task.id)"
 				:should-handle-hover="true"
 				@click="handleTaskClicked($event, task.id, index)"
+			/> -->
+			<TaskItem
+				v-for="(id, index) in Object.keys(appStore.currentServer.data.tasks).map(Number)"
+				:key="id"
+				:task="appStore.currentServer.data.tasks[id]"
+				:id="id"
+				:selected="appStore.selectedTask.has(id)"
+				:should-handle-hover="true"
+				@click="handleTaskClicked($event, id, index)"
 			/>
 		</div>
 		<div

@@ -414,9 +414,9 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 			task.remoteTask = true;
 		} else {
 			task.paraArray = getFFmpegParaArray({ outputParams: task.after, withQuotes: true });
-			// if (firstFilePath?.length) {
-			// 	this.getFileMetadata(id, task);
-			// }
+			if (firstFilePath?.length) {
+				this.getFileMetadata(id, task);
+			}
 		}
 
 		this.emit('tasklistUpdate', { content: Object.keys(this.tasklist).map(Number) });

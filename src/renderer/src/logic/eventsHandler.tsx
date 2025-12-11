@@ -70,7 +70,7 @@ export function handleTasklistUpdate(server: Server, content: Array<number>) {
 			remoteI++;
 		}
 	}
-	serverData.tasks = Object.assign(newTaskList, {'-1': serverData.tasks[-1]});
+	serverData.tasks = newTaskList;
 	// 依次获取所有新增任务的信息
 	// 为什么要加延迟？在不加延迟的情况下，会产生这样的错误：
 	// 添加远程任务时，服务器会发送 tasklist update 来到此处更新任务（返回一个 idle 的任务），同时上传模块会通过 setUploadStatus 使服务器发送 task update（返回一个 initializing 的任务），也就是产生两次 task update
@@ -92,9 +92,9 @@ export function handleTaskUpdate(server: Server, id: number, content: Task) {
 		// 本地不存在此任务，则新增
 		serverData.tasks[id] = getInitialUITask('');
 	}
-	console.log('taskUpdate', content);
 	const task = mergeTaskFromService(serverData.tasks[id], content);
 	serverData.tasks[id] = task;
+	// Object.assign(serverData.tasks[id], task);
 	// timer 相关处理（开始运行时添加定时器，结束或暂停运行时取消定时器）
 	if (task.status === TaskStatus.running && !task.dashboardTimer) {
 		task.dashboardTimer = setInterval(dashboardTimer, 50, task) as any;

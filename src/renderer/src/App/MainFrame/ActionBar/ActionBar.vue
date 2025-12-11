@@ -14,7 +14,7 @@ const selectionDescription = computed(() => {
 	}
 	return Object.keys(appStore.currentServer?.data.tasks || []).length > 1 && !appStore.selectedTask.size && appStore.taskSelectionModified
 		? '您修改了参数' + (window.innerWidth > 740 ? '，但并未应用到任务，是否' : '')
-		: `${Object.keys(appStore.currentServer?.data.tasks || []).length - 1} 个任务` + (appStore.selectedTask.size ? `，已选择 ${appStore.selectedTask.size} 个` : '')	// 注意去掉 1 个全局任务
+		: `${Object.keys(appStore.currentServer?.data.tasks || []).length} 个任务` + (appStore.selectedTask.size ? `，已选择 ${appStore.selectedTask.size} 个` : '')
 });
 const startButtonClass = computed(() => {
 	if (!appStore.currentServer || appStore.currentServer.entity.status !== ServiceBridgeStatus.Connected) {

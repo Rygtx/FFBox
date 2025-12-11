@@ -1,4 +1,4 @@
-import { computed, defineComponent, onBeforeUnmount, ref, Transition, watch, onMounted, StyleValue } from 'vue';
+import { computed, defineComponent, onBeforeUnmount, ref, Transition, watch, onMounted, StyleValue, onRenderTracked, onRenderTriggered, onUpdated } from 'vue';
 import { TaskStatus } from '@common/types';
 import { UITask } from '@renderer/types'
 import { getVideoRateControlParam } from '@common/params/vcodecs';
@@ -33,6 +33,16 @@ interface Props {
 export const TaskItem = defineComponent((props: Props) => {
 	const appStore = useAppStore();
 	const settings = appStore.taskViewSettings;
+
+	// onRenderTracked(e => {
+	// 	console.log('[TRACKED]', props.task.taskName, e)
+	// })
+	// onRenderTriggered(e => {
+	// 	console.log('[TRIGGERED]', props.task.taskName, e)
+	// })
+	// onUpdated(() => {
+	// 	console.log('[UPDATED] child rendered', props.task.taskName)
+	// })
 
 	// #region 预先计算以减少下方计算量
 
@@ -481,7 +491,9 @@ export const TaskItem = defineComponent((props: Props) => {
 
 	// #endregion
 
-	return () => (
+	return () => {
+		// console.log('render', props.task.taskName);
+		return (
 		<div class={css.taskWrapper1} onClick={props.onClick}>
 			<div class={css.taskWrapper2}>
 				<div
@@ -691,9 +703,8 @@ export const TaskItem = defineComponent((props: Props) => {
 					</button>
 				</div>
 			</div>
-		</div>
-
-	);
+		</div>)
+	};
 }, {
 	props: ['task', 'id', 'selected', 'shouldHandleHover', 'onClick'],
 });

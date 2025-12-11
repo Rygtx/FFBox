@@ -37,6 +37,9 @@ class ElectronApp {
 			if (process.platform === 'win32') {
 				app.setAppUserModelId(app.getName());
 			}
+			// if (!app.isPackaged) {
+			// 	await session.defaultSession.loadExtension(`${app.getAppPath()}/vue-devtools`);
+			// }
 			await osBridge.initPipe();
 			this.createMainWindow();
 			this.mountIpcEvents();

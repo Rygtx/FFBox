@@ -538,13 +538,29 @@ export const useAppStore = defineStore('app', {
 					}
 				}
 			}
-			这.taskViewSettings.paramsVisibility = {
+			const newVisibility = {
 				duration: (['none', 'input', 'all'] as any)[paramsVisibility.duration],
 				format: (['none', 'input', 'all'] as any)[paramsVisibility.format],
 				smpte: (['none', 'input', 'all'] as any)[paramsVisibility.smpte],
 				video: (['none', 'input', 'all'] as any)[paramsVisibility.video],
 				audio: (['none', 'input', 'all'] as any)[paramsVisibility.audio],
 			};
+			if (
+				这.taskViewSettings.paramsVisibility.duration !== newVisibility.duration ||
+				这.taskViewSettings.paramsVisibility.format !== newVisibility.format ||
+				这.taskViewSettings.paramsVisibility.smpte !== newVisibility.smpte ||
+				这.taskViewSettings.paramsVisibility.video !== newVisibility.video ||
+				这.taskViewSettings.paramsVisibility.audio !== newVisibility.audio
+			) {
+				这.taskViewSettings.paramsVisibility = newVisibility;
+			}
+			// 这.taskViewSettings.paramsVisibility = {
+			// 	duration: (['none', 'input', 'all'] as any)[paramsVisibility.duration],
+			// 	format: (['none', 'input', 'all'] as any)[paramsVisibility.format],
+			// 	smpte: (['none', 'input', 'all'] as any)[paramsVisibility.smpte],
+			// 	video: (['none', 'input', 'all'] as any)[paramsVisibility.video],
+			// 	audio: (['none', 'input', 'all'] as any)[paramsVisibility.audio],
+			// };
 			// console.log('recalcChangedParams', 这.taskViewSettings.paramsVisibility);
 		},
 		/**
