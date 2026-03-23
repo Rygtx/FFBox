@@ -26,6 +26,7 @@ export function getFFmpegParaArray(params: { outputParams: OutputParams, withQuo
 	ret.push('-hide_banner');
 	ret.push(...getInputFFmpegParam(outputParams.input, withQuotes, inputDir));
 
+	if (!outputParams.filter?.nodes || !outputParams.filter?.lines) outputParams.filter = { nodes: [], lines: [] };	// 从类型定义上来说不应该会执行这一条，这里的处理是防范外部 API 调用不遵守规范
 	associateNodesAndLines(outputParams.filter.nodes, outputParams.filter.lines);
 	const filterStr = getFilterParam(outputParams.filter.nodes, outputParams.filter.lines);
 	if (filterStr) {

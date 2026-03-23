@@ -152,7 +152,7 @@ const VcodecView = defineComponent((props: Props) => {
 		}
 	};
 	const handleDetailChange = (sName: string, value: any) => {
-		// @ts-ignore
+		if (!videoParams.value.detail) videoParams.value.detail = {};
 		videoParams.value.detail[sName] = value;
 		appStore.applyParameters();
 	};

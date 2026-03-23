@@ -400,9 +400,7 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 
 		const id = this.latestTaskId++;
 		const firstFilePath = outputParams.input.files?.[0]?.filePath;
-		log.info(`[任务 ${id}] 新增任务：${taskName}（${firstFilePath ? '单输入普通任务' : '多输入/网络任务'}）。`);
 		const task = getInitialServiceTask(taskName, outputParams);
-		this.tasklist[id] = task;
 
 		// 更新命令行参数
 		if (isRemote) {
@@ -416,7 +414,9 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 				this.getFileMetadata(id, task);
 			}
 		}
-
+	
+		log.info(`[任务 ${id}] 新增任务：${taskName}（${firstFilePath ? '单输入普通任务' : '多输入/网络任务'}）。`);
+		this.tasklist[id] = task;
 		this.emit('tasklistUpdate', { content: Object.keys(this.tasklist).map(Number) });
 
 		webhookManager.triggerTaskEvent('task.created', id, { taskId: id, task: this.tasklist[id] as any }).catch(() => {});
@@ -456,9 +456,8 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 							createTime: birthtime.getTime(),
 							modifyTime: mtime.getTime(),
 						};
-					} finally {
-						resolve(0);
-					}
+					} catch {}
+					resolve(0);
 				}
 				resolve(0);
 	

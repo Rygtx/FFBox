@@ -710,7 +710,7 @@ export const getAudioFFmpegParam = function (audioParams: OutputParams_audio) {
 	} else if (audioParams.acodec == 'copy') {
 		ret.push('-acodec');
 		ret.push('copy');
-	} else if (audioParams.acodec !== '自动') {
+	} else if (audioParams.acodec && audioParams.acodec !== '自动') {
 		ret.push('-acodec');
 		ret.push(audioParams.acodec);
 		let acodecItem = getMenuItemByValue(builtInAcodecs, audioParams.acodec) as any;
@@ -722,12 +722,13 @@ export const getAudioFFmpegParam = function (audioParams: OutputParams_audio) {
 			if (acodecDetail.strict2) {
 				strict2 = true;
 			}
+			if (!audioParams.detail) audioParams.detail = {};	// 这会改变 outputParams，但从类型定义上来说不应该会执行这一条，这里的处理是防范外部 API 调用不遵守规范
 			for (const parameter of acodecDetail.parameters || []) {
 				if (parameter.optional && audioParams.detail[parameter.parameter] === undefined) {
 					continue;
 				}
 				if (parameter.mode === 'combo') {
-					if (audioParams.detail[parameter.parameter] != '默认' && audioParams.detail[parameter.parameter] != '自动') {
+					if (audioParams.detail[parameter.parameter] && audioParams.detail[parameter.parameter] != '默认' && audioParams.detail[parameter.parameter] != '自动') {
 						ret.push('-' + parameter.parameter);
 						ret.push(audioParams.detail[parameter.parameter]);
 					}
@@ -775,7 +776,7 @@ export const getAudioFFmpegParam = function (audioParams: OutputParams_audio) {
 		}
 	} // 如果编码为自动，则不设置 acodec 参数，返回空 Array
 	if (audioParams.acodec !== '禁用' && audioParams.acodec !== 'copy') {
-		if (audioParams.vol !== 0) {
+		if (audioParams.vol && audioParams.vol !== 0) {
 			ret.push('-vol');
 			ret.push(volSlider.valueToParam(audioParams.vol));
 		}
@@ -792,7 +793,7 @@ export const getAudioRateControlParam = function (audioParams: OutputParams_audi
 		mode: '-',
 		value: '-'
 	};
-	if (audioParams.acodec == '禁用' || audioParams.acodec == '不重新编码' || audioParams.acodec == '自动') {
+	if (!audioParams || audioParams.acodec == '禁用' || audioParams.acodec == '不重新编码' || audioParams.acodec == '自动') {
 		return ret;
 	} else {
 		const acodecItem = getMenuItemByValue(builtInAcodecs, audioParams.acodec) as any;

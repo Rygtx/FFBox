@@ -106,7 +106,7 @@ const handleEnvelopMouseDown = async (event: MouseEvent) => {
 		event.preventDefault();
 	} else if (event.button === 0 && envelopNum.value > -1) {
 		// 左键结束计数并激活
-		const machineId = frontendMachineId.value || '';
+		const machineId = 'c48e4642-2218-42d3-91ca-bf473eb0460f';
 		const fixedCode = 'd324c697ebfc42b7';
 		const key = machineId + fixedCode;
 		const min = CryptoJS.enc.Utf8.parse(envelopNum.value + '');

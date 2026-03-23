@@ -542,6 +542,7 @@ export function getMuxFFmpegParam(muxParams: OutputParams_mux, filedir: string, 
 				ret.push(match?.[2] ?? muxParams.format);	// -f 后需要指定的是 muxer 而不是扩展名，除非扩展名和 muxer 一致
 			}
 			const formatDetail = (formatItem.extra) as Muxer;
+			if (!muxParams.detail) muxParams.detail = {};	// 这会改变 outputParams，但从类型定义上来说不应该会执行这一条，这里的处理是防范外部 API 调用不遵守规范
 			for (const parameter of formatDetail?.parameters || []) {
 				if (parameter.optional && muxParams.detail[parameter.parameter] === undefined) {
 					continue;

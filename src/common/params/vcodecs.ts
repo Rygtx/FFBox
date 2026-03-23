@@ -1837,7 +1837,7 @@ export function getVideoFFmpegParam(videoParams: OutputParams_video) {
 	} else if (videoParams.vcodec === 'copy') {
 		ret.push('-vcodec');
 		ret.push('copy');
-	} else if (videoParams.vcodec !== '自动') {
+	} else if (videoParams.vcodec && videoParams.vcodec !== '自动') {
 		ret.push('-vcodec');
 		ret.push(videoParams.vcodec);
 		let vcodecItem = getMenuItemByValue(builtInVcodecs, videoParams.vcodec) as any;
@@ -1849,12 +1849,13 @@ export function getVideoFFmpegParam(videoParams: OutputParams_video) {
 			if (vcodecDetail.strict2) {
 				strict2 = true;
 			}
+			if (!videoParams.detail) videoParams.detail = {};	// 这会改变 outputParams，但从类型定义上来说不应该会执行这一条，这里的处理是防范外部 API 调用不遵守规范
 			for (const parameter of vcodecDetail.parameters || []) {
 				if (parameter.optional && videoParams.detail[parameter.parameter] === undefined) {
 					continue;
 				}
 				if (parameter.mode === 'combo') {
-					if (videoParams.detail[parameter.parameter] != '默认' && videoParams.detail[parameter.parameter] != '自动') {
+					if (videoParams.detail[parameter.parameter] && videoParams.detail[parameter.parameter] != '默认' && videoParams.detail[parameter.parameter] != '自动') {
 						ret.push('-' + parameter.parameter);
 						ret.push(videoParams.detail[parameter.parameter]);
 					}
@@ -1904,11 +1905,11 @@ export function getVideoFFmpegParam(videoParams: OutputParams_video) {
 				ret.push('-2');
 			}
 			// 设置通用参数
-			if (videoParams.resolution != '不改变') {
+			if (videoParams.resolution && videoParams.resolution !== '不改变') {
 				ret.push('-s');
 				ret.push(videoParams.resolution);
 			}
-			if (videoParams.framerate != '不改变') {
+			if (videoParams.framerate && videoParams.framerate !== '不改变') {
 				if (videoParams.framerate.includes('i') && videoParams.framerate.match(/^\d+(.\d+)?i?$/)) {
 					const fieldrate = Number(videoParams.framerate.match(/^(\d+(.\d+)?)/)[0]);
 					ret.push('-r');
@@ -1937,7 +1938,7 @@ export function getVideoRateControlParam(videoParams: OutputParams_video) {
 		mode: '-',
 		value: '-'
 	};
-	if (videoParams.vcodec == '禁用' || videoParams.vcodec == 'copy' || videoParams.vcodec == '自动') {
+	if (!videoParams || videoParams.vcodec == '禁用' || videoParams.vcodec == 'copy' || videoParams.vcodec == '自动') {
 		return ret;
 	} else {
 		const vcodecItem = getMenuItemByValue(builtInVcodecs, videoParams.vcodec) as any;

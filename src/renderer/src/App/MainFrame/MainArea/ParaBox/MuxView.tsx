@@ -61,7 +61,7 @@ const MuxView = defineComponent((props: Props) => {
 		}
 	}
 	const handleDetailChange = (sName: string, value: any) => {
-		// @ts-ignore
+		if (!muxParams.value.detail) muxParams.value.detail = {};
 		muxParams.value.detail[sName] = value;
 		appStore.applyParameters();
 	}

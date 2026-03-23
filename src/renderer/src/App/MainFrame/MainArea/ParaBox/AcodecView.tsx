@@ -145,7 +145,7 @@ const AcodecView = defineComponent((props: Props) => {
 		}
 	};
 	const handleDetailChange = (sName: string, value: any) => {
-		// @ts-ignore
+		if (!audioParams.value.detail) audioParams.value.detail = {};
 		audioParams.value.detail[sName] = value;
 		appStore.applyParameters();
 	};

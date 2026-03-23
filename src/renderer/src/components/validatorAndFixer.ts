@@ -37,7 +37,7 @@ numberValidator.integerEmptyable = function(value: string) {
 }
 
 export function framerateValidator(value: string) {
-	return value.match(/^\d+(.\d+)?i?$/) || value === '不改变' ? undefined : INVALID_TEXT;
+	return value == '' || value.match(/^\d+(.\d+)?i?$/) || value === '不改变' ? undefined : INVALID_TEXT;
 }
 
 export function durationFixer(value: string) {

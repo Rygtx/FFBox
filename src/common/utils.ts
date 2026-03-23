@@ -300,18 +300,11 @@ export function getInitialTask(fileName: string, outputParams?: OutputParams): T
 			outputs: [
 				{
 					video: {
-						vcodec: '',
-						resolution: '',
-						framerate: '',
-						ratecontrol: '',
-						ratevalue: NaN,
+						vcodec: '自动',
 						detail: {}
 					},
 					audio: {
 						acodec: '',
-						ratecontrol: '',
-						ratevalue: NaN,
-						vol: NaN,
 						detail: {}
 					},
 					mux: {

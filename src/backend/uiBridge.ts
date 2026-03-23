@@ -95,16 +95,23 @@ const uiBridge = {
 			}
 		});
 
-		// 读取请求体
-		koa.use(
-			koaBody({
-				multipart: true,
-				formidable: {
-					maxFileSize: 1024 ** 4, // 设置上传文件大小最大限制为 1TiB，默认 2MB
-					uploadDir,
-				},
-			}),
-		);
+		// 读取请求体 - 添加错误处理捕获不可解析的请求
+		koa.use(async (ctx, next) => {
+			try {
+				await koaBody({
+					multipart: true,
+					formidable: {
+						maxFileSize: 1024 ** 4, // 设置上传文件大小最大限制为 1TiB，默认 2MB
+						uploadDir,
+					},
+				})(ctx, next);
+			} catch (err: any) {
+				// 客户端发送了不可解析的数据，返回 400 Bad Request
+				log.warn('请求体解析失败', err.message, ctx.request.url);
+				ctx.status = 400;
+				ctx.body = { error: 'Request body is invalid data' };
+			}
+		});
 
 		// 下载资源响应
 		const staticServer = koaStatic(`${os.tmpdir()}/FFBoxDownloadCache`);

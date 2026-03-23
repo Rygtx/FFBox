@@ -250,19 +250,19 @@ export type OutputParams_filter = {
 
 export type OutputParams_video = {
 	vcodec: string;
-	resolution: string;
-	framerate: string;
-	ratecontrol: string;
-	ratevalue: number | string;
+	resolution?: string;
+	framerate?: string;
+	ratecontrol?: string;
+	ratevalue?: number | string;
 	detail: Record<string, any>;
 	custom?: string;
 }
 
 export type OutputParams_audio = {
 	acodec: string;
-	ratecontrol: string;
-	ratevalue: number | string;
-	vol: number;
+	ratecontrol?: string;
+	ratevalue?: number | string;
+	vol?: number;
 	detail: Record<string, any>;
 	custom?: string;
 };
